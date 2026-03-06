@@ -1,4 +1,4 @@
-﻿name: build-linux-packages
+name: build-linux-packages
 
 on:
   workflow_dispatch:
@@ -142,7 +142,22 @@ jobs:
 
           yum clean all
           yum makecache
-          yum install -y centos-release-scl
+          cat > /etc/yum.repos.d/CentOS-SCLo-scl-rh.repo <<'EOF'
+          [centos-sclo-rh]
+          name=CentOS-7.9.2009 - SCLo rh
+          baseurl=http://vault.centos.org/7.9.2009/sclo/$basearch/rh/
+          enabled=1
+          gpgcheck=0
+
+          [centos-sclo-sclo]
+          name=CentOS-7.9.2009 - SCLo sclo
+          baseurl=http://vault.centos.org/7.9.2009/sclo/$basearch/sclo/
+          enabled=1
+          gpgcheck=0
+          EOF
+
+          yum clean all
+          yum makecache
           yum install -y rh-python38 rh-python38-python-devel gcc gcc-c++ make openssl-devel bzip2-devel libffi-devel zlib-devel
 
           source /opt/rh/rh-python38/enable
