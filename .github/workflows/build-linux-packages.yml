@@ -175,7 +175,7 @@ jobs:
             --distpath /work/dist --workpath /work/build/linux/receiver-c7 --specpath /work/build/linux/spec-c7 \
             /work/receiver/lgm_receiver.py
 
-          chown -R "${HOST_UID}:${HOST_GID}" /work/dist /work/build/linux || true
+          chown -R "${HOST_UID}:${HOST_GID}" /work/dist /work/build || true
           SCRIPT
 
           chmod +x /tmp/build-c7-in-container.sh
@@ -190,6 +190,11 @@ jobs:
             centos:7 \
             /bin/bash /tmp/build-c7-in-container.sh
 
+
+      - name: Normalize workspace ownership (runner)
+        run: |
+          sudo chown -R "$(id -u):$(id -g)" "${GITHUB_WORKSPACE}/build" "${GITHUB_WORKSPACE}/dist" || true
+          mkdir -p "${GITHUB_WORKSPACE}/build/linux-packaging"
       - name: Install packaging deps on runner
         run: |
           sudo apt-get update
