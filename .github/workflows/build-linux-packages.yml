@@ -180,8 +180,10 @@ jobs:
 
           chmod +x /tmp/build-c7-in-container.sh
           docker run --rm \
-            --user "$(id -u):$(id -g)" \
+            --user 0:0 \
             -e HOME=/tmp \
+            -e HOST_UID="$(id -u)" \
+            -e HOST_GID="$(id -g)" \
             -v "$PWD:/work" \
             -v /tmp/build-c7-in-container.sh:/tmp/build-c7-in-container.sh:ro \
             -w /work \
