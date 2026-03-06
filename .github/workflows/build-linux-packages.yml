@@ -16,6 +16,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Normalize shell script line endings
+        run: |
+          sed -i 's/\r$//' scripts/*.sh
+          sed -i 's/\r$//' packaging/hooks/agent/*.sh
+          sed -i 's/\r$//' packaging/hooks/receiver/*.sh
+          chmod +x scripts/*.sh packaging/hooks/agent/*.sh packaging/hooks/receiver/*.sh
+
       - name: Install system deps
         run: |
           sudo apt-get update
@@ -52,9 +59,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Normalize shell script line endings
+        run: |
+          sed -i 's/\r$//' scripts/*.sh
+          sed -i 's/\r$//' packaging/hooks/agent/*.sh
+          sed -i 's/\r$//' packaging/hooks/receiver/*.sh
+          chmod +x scripts/*.sh packaging/hooks/agent/*.sh packaging/hooks/receiver/*.sh
+
       - name: Install system deps
         run: |
-          dnf install -y python3 python3-pip python3-virtualenv gcc gcc-c++ make ruby ruby-devel rubygems
+          dnf install -y python3 python3-pip gcc gcc-c++ make ruby ruby-devel rubygems
           gem install --no-document fpm
 
       - name: Build RPM
