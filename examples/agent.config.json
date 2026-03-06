@@ -1,0 +1,19 @@
+﻿{
+  "receiver_url": "https://receiver.example.com:8443",
+  "update_url": "https://receiver.example.com:8443",
+  "collection_interval": 15,
+  "update_check_interval": 3600,
+  "verify_tls": true,
+  "log_level": "INFO",
+  "plugin": "linux",
+  "register_labels": {
+    "role": "linux",
+    "environment": "production"
+  },
+  "token_key_file": "/etc/lgm-agent/key.bin",
+  "token_enc_file": "/etc/lgm-agent/token.enc",
+  "hmac_enabled": true,
+  "hmac_key_file": "/etc/lgm-agent/hmac_key.bin",
+  "hmac_secret_enc_file": "/etc/lgm-agent/hmac_secret.enc",
+  "request_timeout_seconds": 10
+}

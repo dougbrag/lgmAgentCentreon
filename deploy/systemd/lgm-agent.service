@@ -1,0 +1,20 @@
+﻿[Unit]
+Description=LGM Monitoring Agent
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/lgm-agent --config /etc/lgm-agent/config.json
+Restart=always
+RestartSec=5
+User=root
+Group=root
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/etc/lgm-agent /var/log/lgm-agent
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,109 @@
+﻿name: build-linux-packages
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  deb:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install system deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ruby ruby-dev build-essential python3-venv
+          sudo gem install --no-document fpm
+
+      - name: Build DEB
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          if [ -z "${VERSION}" ] || [ "${VERSION}" = "${GITHUB_REF_NAME}" ]; then VERSION="0.0.0-dev"; fi
+          chmod +x scripts/build_linux.sh
+          scripts/build_linux.sh "${VERSION}" artifacts deb
+
+      - name: Generate SHA256 (DEB)
+        run: |
+          sha256sum artifacts/*.deb > artifacts/SHA256SUMS-deb.txt
+
+      - name: Upload Debian artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: deb-packages
+          path: |
+            artifacts/*.deb
+            artifacts/SHA256SUMS-deb.txt
+
+  rpm:
+    runs-on: ubuntu-latest
+    container:
+      image: rockylinux:9
+    steps:
+      - name: Install git
+        run: dnf install -y git
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install system deps
+        run: |
+          dnf install -y python3 python3-pip python3-virtualenv gcc gcc-c++ make ruby ruby-devel rubygems
+          gem install --no-document fpm
+
+      - name: Build RPM
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          if [ -z "${VERSION}" ] || [ "${VERSION}" = "${GITHUB_REF_NAME}" ]; then VERSION="0.0.0-dev"; fi
+          chmod +x scripts/build_linux.sh
+          scripts/build_linux.sh "${VERSION}" artifacts rpm
+
+      - name: Generate SHA256 (RPM)
+        run: |
+          sha256sum artifacts/*.rpm > artifacts/SHA256SUMS-rpm.txt
+
+      - name: Upload RPM artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: rpm-packages
+          path: |
+            artifacts/*.rpm
+            artifacts/SHA256SUMS-rpm.txt
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    needs: [deb, rpm]
+    steps:
+      - name: Download Debian artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: deb-packages
+          path: release-artifacts/deb
+
+      - name: Download RPM artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: rpm-packages
+          path: release-artifacts/rpm
+
+      - name: Build combined checksum file
+        run: |
+          cat release-artifacts/deb/SHA256SUMS-deb.txt release-artifacts/rpm/SHA256SUMS-rpm.txt > release-artifacts/SHA256SUMS.txt
+
+      - name: Publish GitHub Release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release-artifacts/deb/*.deb
+            release-artifacts/rpm/*.rpm
+            release-artifacts/deb/SHA256SUMS-deb.txt
+            release-artifacts/rpm/SHA256SUMS-rpm.txt
+            release-artifacts/SHA256SUMS.txt
+          generate_release_notes: true
