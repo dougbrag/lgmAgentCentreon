@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 mkdir -p /etc/lgm-agent /var/log/lgm-agent

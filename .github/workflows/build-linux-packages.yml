@@ -1,4 +1,4 @@
-﻿name: build-linux-packages
+name: build-linux-packages
 
 on:
   workflow_dispatch:
@@ -18,9 +18,12 @@ jobs:
 
       - name: Normalize shell script line endings
         run: |
-          sed -i 's/\r$//' scripts/*.sh
-          sed -i 's/\r$//' packaging/hooks/agent/*.sh
-          sed -i 's/\r$//' packaging/hooks/receiver/*.sh
+          sed -i 's/\\r$//' scripts/*.sh
+          sed -i '1s/^\xEF\xBB\xBF//' scripts/*.sh
+          sed -i 's/\\r$//' packaging/hooks/agent/*.sh
+          sed -i '1s/^\xEF\xBB\xBF//' packaging/hooks/agent/*.sh
+          sed -i 's/\\r$//' packaging/hooks/receiver/*.sh
+          sed -i '1s/^\xEF\xBB\xBF//' packaging/hooks/receiver/*.sh
           chmod +x scripts/*.sh packaging/hooks/agent/*.sh packaging/hooks/receiver/*.sh
 
       - name: Install system deps
@@ -61,9 +64,12 @@ jobs:
 
       - name: Normalize shell script line endings
         run: |
-          sed -i 's/\r$//' scripts/*.sh
-          sed -i 's/\r$//' packaging/hooks/agent/*.sh
-          sed -i 's/\r$//' packaging/hooks/receiver/*.sh
+          sed -i 's/\\r$//' scripts/*.sh
+          sed -i '1s/^\xEF\xBB\xBF//' scripts/*.sh
+          sed -i 's/\\r$//' packaging/hooks/agent/*.sh
+          sed -i '1s/^\xEF\xBB\xBF//' packaging/hooks/agent/*.sh
+          sed -i 's/\\r$//' packaging/hooks/receiver/*.sh
+          sed -i '1s/^\xEF\xBB\xBF//' packaging/hooks/receiver/*.sh
           chmod +x scripts/*.sh packaging/hooks/agent/*.sh packaging/hooks/receiver/*.sh
 
       - name: Install system deps

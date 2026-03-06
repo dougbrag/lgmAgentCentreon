@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 mkdir -p /etc/lgm-monitor /var/lib/lgm-monitor /var/log/lgm-monitor
