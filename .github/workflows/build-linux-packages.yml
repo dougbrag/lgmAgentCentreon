@@ -175,7 +175,7 @@ jobs:
             --distpath /work/dist --workpath /work/build/linux/receiver-c7 --specpath /work/build/linux/spec-c7 \
             /work/receiver/lgm_receiver.py
 
-          chown -R "${HOST_UID}:${HOST_GID}" /work/dist /work/build/linux/agent-c7 /work/build/linux/receiver-c7 /work/build/linux/spec-c7 || true
+          chown -R "${HOST_UID}:${HOST_GID}" /work/dist /work/build/linux || true
           SCRIPT
 
           chmod +x /tmp/build-c7-in-container.sh
@@ -200,6 +200,7 @@ jobs:
         env:
           SKIP_BUILD: "1"
           FPM_ITERATION: "1.el7"
+          BUILD_DIR: "${{ github.workspace }}/build/linux-packaging"
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           if [ -z "${VERSION}" ] || [ "${VERSION}" = "${GITHUB_REF_NAME}" ]; then VERSION="0.0.0-dev"; fi

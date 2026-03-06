@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 VERSION="${1:-1.0.0}"
@@ -9,7 +9,7 @@ SKIP_VENV="${SKIP_VENV:-0}"
 SKIP_BUILD="${SKIP_BUILD:-0}"
 FPM_ITERATION="${FPM_ITERATION:-1}"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-BUILD_DIR="${ROOT_DIR}/build/linux"
+BUILD_DIR="${BUILD_DIR:-${ROOT_DIR}/build/linux}"
 DIST_DIR="${ROOT_DIR}/dist"
 PKG_ROOT="${BUILD_DIR}/pkgroot"
 
