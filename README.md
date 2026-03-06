@@ -341,3 +341,13 @@ sudo bash scripts/bootstrap_receiver.sh dist/lgm-receiver start
 Automacao via DEB/RPM (hooks incluidos no pacote):
 - `post-install`: cria diretorios, copia `config.json.example` para `config.json` se ausente, `daemon-reload`, `enable` do service
 - `before-remove`: `stop` + `disable` do service
+
+## 11) RPM especifico para CentOS 7 (glibc 2.17)
+
+O pipeline agora gera um RPM dedicado para CentOS 7 usando base compativel com `glibc 2.17`.
+
+No Release, prefira o pacote com iteracao `el7`, por exemplo:
+- `lgm-agent-<versao>-1.el7.x86_64.rpm`
+- `lgm-receiver-<versao>-1.el7.x86_64.rpm`
+
+Em servidores CentOS 7, instale sempre os `*.el7.x86_64.rpm`.

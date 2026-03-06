@@ -1,9 +1,12 @@
-#!/usr/bin/env bash
+﻿#!/usr/bin/env bash
 set -euo pipefail
 
 VERSION="${1:-1.0.0}"
 OUT_DIR="${2:-artifacts}"
 TARGETS="${3:-deb,rpm}"
+PYTHON_BIN="${PYTHON_BIN:-python3}"
+SKIP_VENV="${SKIP_VENV:-0}"
+FPM_ITERATION="${FPM_ITERATION:-1}"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_DIR="${ROOT_DIR}/build/linux"
 DIST_DIR="${ROOT_DIR}/dist"
@@ -16,7 +19,7 @@ need_cmd() {
   fi
 }
 
-need_cmd python3
+need_cmd "${PYTHON_BIN}"
 need_cmd fpm
 
 rm -rf "${BUILD_DIR}" "${DIST_DIR}/lgm-agent" "${DIST_DIR}/lgm-receiver"
@@ -28,16 +31,22 @@ chmod +x scripts/bootstrap_agent.sh scripts/bootstrap_receiver.sh \
   packaging/hooks/agent/post-install.sh packaging/hooks/agent/before-remove.sh \
   packaging/hooks/receiver/post-install.sh packaging/hooks/receiver/before-remove.sh
 
-python3 -m venv .venv
-source .venv/bin/activate
-pip install --upgrade pip >/dev/null
-pip install -r requirements.txt pyinstaller >/dev/null
+if [ "${SKIP_VENV}" = "1" ]; then
+  "${PYTHON_BIN}" -m pip install --upgrade pip >/dev/null
+  "${PYTHON_BIN}" -m pip install -r requirements.txt pyinstaller >/dev/null
+else
+  "${PYTHON_BIN}" -m venv .venv
+  source .venv/bin/activate
+  PYTHON_BIN="${ROOT_DIR}/.venv/bin/python"
+  "${PYTHON_BIN}" -m pip install --upgrade pip >/dev/null
+  "${PYTHON_BIN}" -m pip install -r requirements.txt pyinstaller >/dev/null
+fi
 
-pyinstaller --noconfirm --clean --onefile --name lgm-agent \
+"${PYTHON_BIN}" -m PyInstaller --noconfirm --clean --onefile --name lgm-agent \
   --distpath "${DIST_DIR}" --workpath "${BUILD_DIR}/agent" --specpath "${BUILD_DIR}/spec" \
   agent/lgm_agent.py
 
-pyinstaller --noconfirm --clean --onefile --name lgm-receiver \
+"${PYTHON_BIN}" -m PyInstaller --noconfirm --clean --onefile --name lgm-receiver \
   --distpath "${DIST_DIR}" --workpath "${BUILD_DIR}/receiver" --specpath "${BUILD_DIR}/spec" \
   receiver/lgm_receiver.py
 
@@ -67,14 +76,14 @@ for target in "${target_list[@]}"; do
       ;;
   esac
 
-  fpm -s dir -t "${target}" -n lgm-agent -v "${VERSION}" \
+  fpm -s dir -t "${target}" -n lgm-agent -v "${VERSION}" --iteration "${FPM_ITERATION}" \
     --description "LGM Monitoring Agent" \
     --url "https://example.com/lgm" \
     --after-install packaging/hooks/agent/post-install.sh \
     --before-remove packaging/hooks/agent/before-remove.sh \
     -C "${PKG_ROOT}/agent" .
 
-  fpm -s dir -t "${target}" -n lgm-receiver -v "${VERSION}" \
+  fpm -s dir -t "${target}" -n lgm-receiver -v "${VERSION}" --iteration "${FPM_ITERATION}" \
     --description "LGM Receiver Server" \
     --url "https://example.com/lgm" \
     --after-install packaging/hooks/receiver/post-install.sh \
@@ -88,4 +97,3 @@ echo "Packages generated in ${OUT_DIR}:"
 ls -1 "${OUT_DIR}"/* || true
 
 popd >/dev/null
-
