@@ -1,4 +1,4 @@
-﻿name: build-linux-packages
+name: build-linux-packages
 
 on:
   workflow_dispatch:
@@ -178,6 +178,8 @@ jobs:
 
           chmod +x /tmp/build-c7-in-container.sh
           docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp \
             -v "$PWD:/work" \
             -v /tmp/build-c7-in-container.sh:/tmp/build-c7-in-container.sh:ro \
             -w /work \

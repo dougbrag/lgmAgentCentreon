@@ -25,9 +25,8 @@ if [ "${SKIP_BUILD}" != "1" ]; then
 fi
 need_cmd fpm
 
-rm -rf "${BUILD_DIR}"
 if [ "${SKIP_BUILD}" != "1" ]; then
-  rm -rf "${DIST_DIR}/lgm-agent" "${DIST_DIR}/lgm-receiver"
+  rm -rf "${BUILD_DIR}" "${DIST_DIR}/lgm-agent" "${DIST_DIR}/lgm-receiver"
 fi
 mkdir -p "${BUILD_DIR}" "${OUT_DIR}"
 
