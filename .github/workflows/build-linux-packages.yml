@@ -98,12 +98,7 @@ jobs:
 
   rpm_centos7:
     runs-on: ubuntu-latest
-    container:
-      image: quay.io/pypa/manylinux2014_x86_64
     steps:
-      - name: Install git
-        run: yum install -y git
-
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -117,21 +112,15 @@ jobs:
           sed -i '1s/^\xEF\xBB\xBF//' packaging/hooks/receiver/*.sh
           chmod +x scripts/*.sh packaging/hooks/agent/*.sh packaging/hooks/receiver/*.sh
 
-      - name: Install system deps
-        run: |
-          yum install -y gcc gcc-c++ make ruby ruby-devel rubygems rpm-build
-          gem install --no-document fpm
-
-      - name: Build RPM (CentOS 7 / glibc 2.17)
-        env:
-          PYTHON_BIN: /opt/python/cp39-cp39/bin/python
-          SKIP_VENV: "1"
-          FPM_ITERATION: "1.el7"
+      - name: Build RPM (CentOS 7 / glibc 2.17 in manylinux2014)
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           if [ -z "${VERSION}" ] || [ "${VERSION}" = "${GITHUB_REF_NAME}" ]; then VERSION="0.0.0-dev"; fi
-          chmod +x scripts/build_linux.sh
-          scripts/build_linux.sh "${VERSION}" artifacts rpm
+          docker run --rm \
+            -v "$PWD:/work" \
+            -w /work \
+            quay.io/pypa/manylinux2014_x86_64 \
+            /bin/bash -lc "yum install -y gcc gcc-c++ make ruby ruby-devel rubygems rpm-build && gem install --no-document fpm && PYTHON_BIN=/opt/python/cp39-cp39/bin/python SKIP_VENV=1 FPM_ITERATION=1.el7 scripts/build_linux.sh ${VERSION} artifacts rpm"
 
       - name: Generate SHA256 (RPM CentOS7)
         run: |
