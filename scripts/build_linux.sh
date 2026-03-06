@@ -17,7 +17,6 @@ need_cmd() {
 }
 
 need_cmd python3
-need_cmd pyinstaller
 need_cmd fpm
 
 rm -rf "${BUILD_DIR}" "${DIST_DIR}/lgm-agent" "${DIST_DIR}/lgm-receiver"
@@ -89,3 +88,4 @@ echo "Packages generated in ${OUT_DIR}:"
 ls -1 "${OUT_DIR}"/* || true
 
 popd >/dev/null
+
