@@ -116,11 +116,56 @@ jobs:
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           if [ -z "${VERSION}" ] || [ "${VERSION}" = "${GITHUB_REF_NAME}" ]; then VERSION="0.0.0-dev"; fi
+          cat > /tmp/build-c7-in-container.sh <<'SCRIPT'
+          #!/usr/bin/env bash
+          set -euo pipefail
+
+          cat > /etc/yum.repos.d/CentOS-Base.repo <<'EOF'
+          [base]
+          name=CentOS-7.9.2009 - Base
+          baseurl=http://vault.centos.org/7.9.2009/os/$basearch/
+          enabled=1
+          gpgcheck=0
+
+          [updates]
+          name=CentOS-7.9.2009 - Updates
+          baseurl=http://vault.centos.org/7.9.2009/updates/$basearch/
+          enabled=1
+          gpgcheck=0
+
+          [extras]
+          name=CentOS-7.9.2009 - Extras
+          baseurl=http://vault.centos.org/7.9.2009/extras/$basearch/
+          enabled=1
+          gpgcheck=0
+          EOF
+
+          yum clean all
+          yum makecache
+          yum install -y centos-release-scl
+          yum install -y rh-python38 rh-python38-python-devel gcc gcc-c++ make openssl-devel bzip2-devel libffi-devel zlib-devel
+
+          source /opt/rh/rh-python38/enable
+          python3 -m ensurepip --upgrade
+          python3 -m pip install --upgrade pip
+          python3 -m pip install cryptography fastapi psutil pydantic requests uvicorn pyinstaller
+
+          python3 -m PyInstaller --noconfirm --clean --onefile --name lgm-agent \
+            --distpath /work/dist --workpath /work/build/linux/agent-c7 --specpath /work/build/linux/spec-c7 \
+            /work/agent/lgm_agent.py
+
+          python3 -m PyInstaller --noconfirm --clean --onefile --name lgm-receiver \
+            --distpath /work/dist --workpath /work/build/linux/receiver-c7 --specpath /work/build/linux/spec-c7 \
+            /work/receiver/lgm_receiver.py
+          SCRIPT
+
+          chmod +x /tmp/build-c7-in-container.sh
           docker run --rm \
             -v "$PWD:/work" \
+            -v /tmp/build-c7-in-container.sh:/tmp/build-c7-in-container.sh:ro \
             -w /work \
             centos:7 \
-            /bin/bash -lc "sed -i 's|^mirrorlist=|#mirrorlist=|g' /etc/yum.repos.d/CentOS-Base.repo && sed -i 's|^#baseurl=http://mirror.centos.org/centos/$releasever|baseurl=http://vault.centos.org/7.9.2009|g' /etc/yum.repos.d/CentOS-Base.repo && sed -i 's|^baseurl=http://mirror.centos.org/centos/$releasever|baseurl=http://vault.centos.org/7.9.2009|g' /etc/yum.repos.d/CentOS-Base.repo && yum clean all && yum makecache && yum install -y centos-release-scl && yum install -y rh-python38 rh-python38-python-devel gcc gcc-c++ make openssl-devel bzip2-devel libffi-devel zlib-devel && source /opt/rh/rh-python38/enable && python3 -m ensurepip --upgrade && python3 -m pip install --upgrade pip && python3 -m pip install cryptography fastapi psutil pydantic requests uvicorn pyinstaller && python3 -m PyInstaller --noconfirm --clean --onefile --name lgm-agent --distpath /work/dist --workpath /work/build/linux/agent-c7 --specpath /work/build/linux/spec-c7 /work/agent/lgm_agent.py && python3 -m PyInstaller --noconfirm --clean --onefile --name lgm-receiver --distpath /work/dist --workpath /work/build/linux/receiver-c7 --specpath /work/build/linux/spec-c7 /work/receiver/lgm_receiver.py"
+            /bin/bash /tmp/build-c7-in-container.sh
 
       - name: Install packaging deps on runner
         run: |
@@ -192,4 +237,3 @@ jobs:
             release-artifacts/rpm-centos7/SHA256SUMS-rpm-centos7.txt
             release-artifacts/SHA256SUMS.txt
           generate_release_notes: true
-
