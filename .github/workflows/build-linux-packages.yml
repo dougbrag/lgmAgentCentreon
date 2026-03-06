@@ -112,15 +112,15 @@ jobs:
           sed -i '1s/^\xEF\xBB\xBF//' packaging/hooks/receiver/*.sh
           chmod +x scripts/*.sh packaging/hooks/agent/*.sh packaging/hooks/receiver/*.sh
 
-      - name: Build CentOS7-compatible binaries (manylinux2014)
+      - name: Build CentOS7-compatible binaries (centos7 + rh-python38)
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           if [ -z "${VERSION}" ] || [ "${VERSION}" = "${GITHUB_REF_NAME}" ]; then VERSION="0.0.0-dev"; fi
           docker run --rm \
             -v "$PWD:/work" \
             -w /work \
-            quay.io/pypa/manylinux2014_x86_64 \
-            /bin/bash -lc "/opt/python/cp39-cp39/bin/python -m pip install --upgrade pip && /opt/python/cp39-cp39/bin/python -m pip install cryptography fastapi psutil pydantic requests uvicorn pyinstaller && /opt/python/cp39-cp39/bin/python -m PyInstaller --noconfirm --clean --onefile --name lgm-agent --distpath /work/dist --workpath /work/build/linux/agent-c7 --specpath /work/build/linux/spec-c7 /work/agent/lgm_agent.py && /opt/python/cp39-cp39/bin/python -m PyInstaller --noconfirm --clean --onefile --name lgm-receiver --distpath /work/dist --workpath /work/build/linux/receiver-c7 --specpath /work/build/linux/spec-c7 /work/receiver/lgm_receiver.py"
+            centos:7 \
+            /bin/bash -lc "yum install -y centos-release-scl && yum install -y rh-python38 rh-python38-python-devel gcc gcc-c++ make openssl-devel bzip2-devel libffi-devel zlib-devel && source /opt/rh/rh-python38/enable && python3 -m ensurepip --upgrade && python3 -m pip install --upgrade pip && python3 -m pip install cryptography fastapi psutil pydantic requests uvicorn pyinstaller && python3 -m PyInstaller --noconfirm --clean --onefile --name lgm-agent --distpath /work/dist --workpath /work/build/linux/agent-c7 --specpath /work/build/linux/spec-c7 /work/agent/lgm_agent.py && python3 -m PyInstaller --noconfirm --clean --onefile --name lgm-receiver --distpath /work/dist --workpath /work/build/linux/receiver-c7 --specpath /work/build/linux/spec-c7 /work/receiver/lgm_receiver.py"
 
       - name: Install packaging deps on runner
         run: |
