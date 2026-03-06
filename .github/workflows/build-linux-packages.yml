@@ -1,4 +1,4 @@
-name: build-linux-packages
+﻿name: build-linux-packages
 
 on:
   workflow_dispatch:
@@ -192,3 +192,4 @@ jobs:
             release-artifacts/rpm-centos7/SHA256SUMS-rpm-centos7.txt
             release-artifacts/SHA256SUMS.txt
           generate_release_notes: true
+
