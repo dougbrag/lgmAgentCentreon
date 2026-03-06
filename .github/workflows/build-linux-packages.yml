@@ -1,4 +1,4 @@
-﻿name: build-linux-packages
+name: build-linux-packages
 
 on:
   workflow_dispatch:
@@ -120,7 +120,7 @@ jobs:
             -v "$PWD:/work" \
             -w /work \
             quay.io/pypa/manylinux2014_x86_64 \
-            /bin/bash -lc "/opt/python/cp39-cp39/bin/python -m pip install --upgrade pip && /opt/python/cp39-cp39/bin/python -m pip install -r requirements.txt pyinstaller && /opt/python/cp39-cp39/bin/python -m PyInstaller --noconfirm --clean --onefile --name lgm-agent --distpath /work/dist --workpath /work/build/linux/agent-c7 --specpath /work/build/linux/spec-c7 /work/agent/lgm_agent.py && /opt/python/cp39-cp39/bin/python -m PyInstaller --noconfirm --clean --onefile --name lgm-receiver --distpath /work/dist --workpath /work/build/linux/receiver-c7 --specpath /work/build/linux/spec-c7 /work/receiver/lgm_receiver.py"
+            /bin/bash -lc "/opt/python/cp39-cp39/bin/python -m pip install --upgrade pip && /opt/python/cp39-cp39/bin/python -m pip install cryptography fastapi psutil pydantic requests uvicorn pyinstaller && /opt/python/cp39-cp39/bin/python -m PyInstaller --noconfirm --clean --onefile --name lgm-agent --distpath /work/dist --workpath /work/build/linux/agent-c7 --specpath /work/build/linux/spec-c7 /work/agent/lgm_agent.py && /opt/python/cp39-cp39/bin/python -m PyInstaller --noconfirm --clean --onefile --name lgm-receiver --distpath /work/dist --workpath /work/build/linux/receiver-c7 --specpath /work/build/linux/spec-c7 /work/receiver/lgm_receiver.py"
 
       - name: Install packaging deps on runner
         run: |
