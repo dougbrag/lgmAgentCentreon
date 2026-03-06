@@ -1,4 +1,4 @@
-name: build-linux-packages
+﻿name: build-linux-packages
 
 on:
   workflow_dispatch:
@@ -160,7 +160,9 @@ jobs:
           yum makecache
           yum install -y rh-python38 rh-python38-python-devel gcc gcc-c++ make openssl-devel bzip2-devel libffi-devel zlib-devel
 
+          set +u
           source /opt/rh/rh-python38/enable
+          set -u
           python3 -m ensurepip --upgrade
           python3 -m pip install --upgrade pip
           python3 -m pip install cryptography fastapi psutil pydantic requests uvicorn pyinstaller
@@ -252,3 +254,4 @@ jobs:
             release-artifacts/rpm-centos7/SHA256SUMS-rpm-centos7.txt
             release-artifacts/SHA256SUMS.txt
           generate_release_notes: true
+
