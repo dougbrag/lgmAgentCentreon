@@ -68,7 +68,7 @@ jobs:
 
       - name: Install system deps
         run: |
-          dnf install -y python3 python3-pip gcc gcc-c++ make ruby ruby-devel rubygems
+          dnf install -y python3 python3-pip gcc gcc-c++ make ruby ruby-devel rubygems rpm-build
           gem install --no-document fpm
 
       - name: Build RPM
@@ -121,3 +121,4 @@ jobs:
             release-artifacts/rpm/SHA256SUMS-rpm.txt
             release-artifacts/SHA256SUMS.txt
           generate_release_notes: true
+
