@@ -112,7 +112,7 @@ jobs:
           sed -i '1s/^\xEF\xBB\xBF//' packaging/hooks/receiver/*.sh
           chmod +x scripts/*.sh packaging/hooks/agent/*.sh packaging/hooks/receiver/*.sh
 
-      - name: Build RPM (CentOS 7 / glibc 2.17 in manylinux2014)
+      - name: Build CentOS7-compatible binaries (manylinux2014)
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           if [ -z "${VERSION}" ] || [ "${VERSION}" = "${GITHUB_REF_NAME}" ]; then VERSION="0.0.0-dev"; fi
@@ -120,7 +120,23 @@ jobs:
             -v "$PWD:/work" \
             -w /work \
             quay.io/pypa/manylinux2014_x86_64 \
-            /bin/bash -lc "yum install -y gcc gcc-c++ make ruby ruby-devel rubygems rpm-build && gem install --no-document fpm && PYTHON_BIN=/opt/python/cp39-cp39/bin/python SKIP_VENV=1 FPM_ITERATION=1.el7 scripts/build_linux.sh ${VERSION} artifacts rpm"
+            /bin/bash -lc "/opt/python/cp39-cp39/bin/python -m pip install --upgrade pip && /opt/python/cp39-cp39/bin/python -m pip install -r requirements.txt pyinstaller && /opt/python/cp39-cp39/bin/python -m PyInstaller --noconfirm --clean --onefile --name lgm-agent --distpath /work/dist --workpath /work/build/linux/agent-c7 --specpath /work/build/linux/spec-c7 /work/agent/lgm_agent.py && /opt/python/cp39-cp39/bin/python -m PyInstaller --noconfirm --clean --onefile --name lgm-receiver --distpath /work/dist --workpath /work/build/linux/receiver-c7 --specpath /work/build/linux/spec-c7 /work/receiver/lgm_receiver.py"
+
+      - name: Install packaging deps on runner
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ruby ruby-dev build-essential
+          sudo gem install --no-document fpm
+
+      - name: Build RPM (CentOS 7 / glibc 2.17)
+        env:
+          SKIP_BUILD: "1"
+          FPM_ITERATION: "1.el7"
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          if [ -z "${VERSION}" ] || [ "${VERSION}" = "${GITHUB_REF_NAME}" ]; then VERSION="0.0.0-dev"; fi
+          chmod +x scripts/build_linux.sh
+          scripts/build_linux.sh "${VERSION}" artifacts rpm
 
       - name: Generate SHA256 (RPM CentOS7)
         run: |

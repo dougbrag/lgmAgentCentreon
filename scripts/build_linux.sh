@@ -6,6 +6,7 @@ OUT_DIR="${2:-artifacts}"
 TARGETS="${3:-deb,rpm}"
 PYTHON_BIN="${PYTHON_BIN:-python3}"
 SKIP_VENV="${SKIP_VENV:-0}"
+SKIP_BUILD="${SKIP_BUILD:-0}"
 FPM_ITERATION="${FPM_ITERATION:-1}"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_DIR="${ROOT_DIR}/build/linux"
@@ -19,10 +20,15 @@ need_cmd() {
   fi
 }
 
-need_cmd "${PYTHON_BIN}"
+if [ "${SKIP_BUILD}" != "1" ]; then
+  need_cmd "${PYTHON_BIN}"
+fi
 need_cmd fpm
 
-rm -rf "${BUILD_DIR}" "${DIST_DIR}/lgm-agent" "${DIST_DIR}/lgm-receiver"
+rm -rf "${BUILD_DIR}"
+if [ "${SKIP_BUILD}" != "1" ]; then
+  rm -rf "${DIST_DIR}/lgm-agent" "${DIST_DIR}/lgm-receiver"
+fi
 mkdir -p "${BUILD_DIR}" "${OUT_DIR}"
 
 pushd "${ROOT_DIR}" >/dev/null
@@ -31,24 +37,31 @@ chmod +x scripts/bootstrap_agent.sh scripts/bootstrap_receiver.sh \
   packaging/hooks/agent/post-install.sh packaging/hooks/agent/before-remove.sh \
   packaging/hooks/receiver/post-install.sh packaging/hooks/receiver/before-remove.sh
 
-if [ "${SKIP_VENV}" = "1" ]; then
-  "${PYTHON_BIN}" -m pip install --upgrade pip >/dev/null
-  "${PYTHON_BIN}" -m pip install -r requirements.txt pyinstaller >/dev/null
-else
-  "${PYTHON_BIN}" -m venv .venv
-  source .venv/bin/activate
-  PYTHON_BIN="${ROOT_DIR}/.venv/bin/python"
-  "${PYTHON_BIN}" -m pip install --upgrade pip >/dev/null
-  "${PYTHON_BIN}" -m pip install -r requirements.txt pyinstaller >/dev/null
+if [ "${SKIP_BUILD}" != "1" ]; then
+  if [ "${SKIP_VENV}" = "1" ]; then
+    "${PYTHON_BIN}" -m pip install --upgrade pip >/dev/null
+    "${PYTHON_BIN}" -m pip install -r requirements.txt pyinstaller >/dev/null
+  else
+    "${PYTHON_BIN}" -m venv .venv
+    source .venv/bin/activate
+    PYTHON_BIN="${ROOT_DIR}/.venv/bin/python"
+    "${PYTHON_BIN}" -m pip install --upgrade pip >/dev/null
+    "${PYTHON_BIN}" -m pip install -r requirements.txt pyinstaller >/dev/null
+  fi
+
+  "${PYTHON_BIN}" -m PyInstaller --noconfirm --clean --onefile --name lgm-agent \
+    --distpath "${DIST_DIR}" --workpath "${BUILD_DIR}/agent" --specpath "${BUILD_DIR}/spec" \
+    agent/lgm_agent.py
+
+  "${PYTHON_BIN}" -m PyInstaller --noconfirm --clean --onefile --name lgm-receiver \
+    --distpath "${DIST_DIR}" --workpath "${BUILD_DIR}/receiver" --specpath "${BUILD_DIR}/spec" \
+    receiver/lgm_receiver.py
 fi
 
-"${PYTHON_BIN}" -m PyInstaller --noconfirm --clean --onefile --name lgm-agent \
-  --distpath "${DIST_DIR}" --workpath "${BUILD_DIR}/agent" --specpath "${BUILD_DIR}/spec" \
-  agent/lgm_agent.py
-
-"${PYTHON_BIN}" -m PyInstaller --noconfirm --clean --onefile --name lgm-receiver \
-  --distpath "${DIST_DIR}" --workpath "${BUILD_DIR}/receiver" --specpath "${BUILD_DIR}/spec" \
-  receiver/lgm_receiver.py
+if [ ! -f "${DIST_DIR}/lgm-agent" ] || [ ! -f "${DIST_DIR}/lgm-receiver" ]; then
+  echo "Missing dist binaries. Expected: ${DIST_DIR}/lgm-agent and ${DIST_DIR}/lgm-receiver" >&2
+  exit 1
+fi
 
 rm -rf "${PKG_ROOT}"
 mkdir -p "${PKG_ROOT}/agent/usr/local/bin" \
