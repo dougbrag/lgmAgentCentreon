@@ -351,3 +351,29 @@ No Release, prefira o pacote com iteracao `el7`, por exemplo:
 - `lgm-receiver-<versao>-1.el7.x86_64.rpm`
 
 Em servidores CentOS 7, instale sempre os `*.el7.x86_64.rpm`.
+
+## 12) Agent legado (Shell + cron, sem Python e sem openssl)
+
+Para sistemas antigos (ex.: CentOS 7), existe uma variante de agent em shell:
+- `legacy/lgm-agent-legacy.sh`
+- `legacy/lgm-agent-legacy.conf`
+- `legacy/install_legacy_agent.sh`
+
+Caracteristicas:
+- sem `python`, `psutil`, `cryptography` e sem `openssl`
+- envio `push` via `curl` com `X-Agent-Token`
+- auto-registro (`/register`) e ingest (`/ingest`)
+- execucao por `cron` (padrao: a cada 1 minuto)
+
+Instalacao rapida:
+
+```bash
+sudo bash legacy/install_legacy_agent.sh
+sudo vi /etc/lgm-agent/legacy.conf
+sudo vi /etc/lgm-agent/token
+sudo /usr/local/bin/lgm-agent-legacy /etc/lgm-agent/legacy.conf
+```
+
+Observacao importante:
+- nesta variante legada, o HMAC nao e aplicado para evitar dependencia de `openssl`.
+- mantenha `verify_tls=true` e use token forte/rotacionado.
