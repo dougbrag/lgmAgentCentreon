@@ -449,3 +449,136 @@ Comportamento:
 - `before-remove`: para e desabilita servico
 
 Esses hooks sao embutidos automaticamente pelos comandos `fpm` no `scripts/build_linux.sh`.
+
+## 18) Agent Legado para Linux Antigo (Shell + cron)
+
+Use este modo quando o host nao suporta bem o binario Python standalone (ex.: CentOS 7 com glibc antiga).
+
+Objetivo:
+- manter monitoramento push sem porta de escuta
+- evitar dependencias de Python/psutil/cryptography/openssl
+- executar com utilitarios base + cron
+
+Arquivos:
+- `legacy/lgm-agent-legacy.sh`
+- `legacy/lgm-agent-legacy.conf`
+- `legacy/install_legacy_agent.sh`
+
+### 18.1 Dependencias minimas
+
+- `bash`
+- `curl`
+- `awk`
+- `sed`
+- `hostname`
+- `df`
+- `cron`/`crond`
+
+Obs.: `openssl` nao e usado nessa variante.
+
+### 18.2 Instalacao no host legado
+
+No host alvo (ou copiando os arquivos do repo):
+
+```bash
+sudo bash legacy/install_legacy_agent.sh
+```
+
+O instalador cria:
+- `/usr/local/bin/lgm-agent-legacy`
+- `/etc/lgm-agent/legacy.conf`
+- `/etc/lgm-agent/token`
+- `/etc/cron.d/lgm-agent-legacy`
+
+### 18.3 Configuracao
+
+Editar endpoint e politicas:
+
+```bash
+sudo vi /etc/lgm-agent/legacy.conf
+```
+
+Campos principais:
+- `RECEIVER_URL="https://receiver.seudominio:8443"`
+- `VERIFY_TLS="true"`
+- `ROLE_LABEL`, `ENV_LABEL`
+
+Definir token:
+
+```bash
+sudo vi /etc/lgm-agent/token
+sudo chmod 600 /etc/lgm-agent/token
+```
+
+O token deve ser o mesmo aceito no Receiver (`agent_tokens` ou `agent_token_file`).
+
+### 18.4 Teste manual
+
+```bash
+sudo /usr/local/bin/lgm-agent-legacy /etc/lgm-agent/legacy.conf
+```
+
+Validar logs:
+
+```bash
+sudo tail -n 50 /var/log/lgm-agent-legacy.log
+```
+
+Mensagens esperadas:
+- `register success` (primeira execucao)
+- `ingest success` (a cada ciclo)
+
+### 18.5 Execucao via cron
+
+Entrada padrao instalada:
+
+```cron
+*/1 * * * * root /usr/local/bin/lgm-agent-legacy /etc/lgm-agent/legacy.conf
+```
+
+Verificar servico de cron:
+
+```bash
+# RHEL/CentOS
+sudo systemctl status crond
+
+# Debian/Ubuntu
+sudo systemctl status cron
+```
+
+### 18.6 Dados enviados
+
+`/register` (uma vez): host, ip, os, labels.
+
+`/ingest` (periodico):
+- `cpu`
+- `memory`
+- `disk`
+- `load1`
+- `uptime`
+- `hostname`
+- `ip`
+
+### 18.7 Seguranca no modo legado
+
+- Token em arquivo local (`/etc/lgm-agent/token`) com permissao `600`.
+- TLS deve ficar em `VERIFY_TLS=true` em producao.
+- HMAC nao e aplicado nesta variante para manter zero dependencia de `openssl`.
+- Recomenda-se rotacao periodica de token.
+
+### 18.8 Troubleshooting legado
+
+`ERROR token file not found`
+- Criar `/etc/lgm-agent/token` e ajustar permissao `600`.
+
+`ERROR RECEIVER_URL is empty`
+- Corrigir `RECEIVER_URL` em `/etc/lgm-agent/legacy.conf`.
+
+`register failed` ou `ingest failed`
+- Validar conectividade HTTPS com Receiver.
+- Confirmar token no Receiver.
+- Conferir se `VERIFY_TLS=true` exige CA/cert valido.
+
+Sem execucao periodica
+- Verificar `/etc/cron.d/lgm-agent-legacy`.
+- Garantir `crond/cron` ativo.
